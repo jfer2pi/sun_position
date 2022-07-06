@@ -1,11 +1,8 @@
-
-
-
-
 require(lubridate)
 require(tidyverse)
 require(ggplot2)
 require(tidylog)
+require(magrittr)
 
 angle_convert <- function(angle, to = "radians") {
         if (to == "radians") {
@@ -132,17 +129,23 @@ solar_position_calculator <-
                                 backtracking_angle_deg = if_else(
                                         backtracking_angle_deg > max_angle,
                                         max_angle,
-                                        backtracking_angle_deg),
-                                backtracking_angle_deg = if_else(backtracking_angle_deg < -1 * max_angle,
-                                                                 -1 * max_angle,
-                                                                 backtracking_angle_deg),
+                                        backtracking_angle_deg
+                                ),
+                                backtracking_angle_deg = if_else(
+                                        backtracking_angle_deg < -1 * max_angle,
+                                        -1 * max_angle,
+                                        backtracking_angle_deg
+                                ),
                                 optimal_tracking_angle_deg = if_else(
                                         optimal_tracking_angle_deg > max_angle,
                                         max_angle,
-                                        optimal_tracking_angle_deg),
-                                optimal_tracking_angle_deg = if_else(optimal_tracking_angle_deg < -1 * max_angle,
-                                                                 -1 * max_angle,
-                                                                 optimal_tracking_angle_deg)
+                                        optimal_tracking_angle_deg
+                                ),
+                                optimal_tracking_angle_deg = if_else(
+                                        optimal_tracking_angle_deg < -1 * max_angle,
+                                        -1 * max_angle,
+                                        optimal_tracking_angle_deg
+                                )
                         )
                 
                 return(analysis_df)
@@ -216,4 +219,25 @@ backtracking_correction_angle <-
                 
                 return(acos(cos_theta_c))
                 
+        }
+
+tracking_plotter <-
+        function(latitude_deg,
+                 gcr = 0.3,
+                 max_angle = 50,
+                 dd) {
+                solar_position_calculator(latitude_deg = latitude_deg,
+                                          gcr = gcr,
+                                          max_angle = max_angle) %>%
+                        filter(dia == dd,!is.na(optimal_tracking_angle_deg)) %>%
+                        ggplot(aes(x = timestamp,
+                                   y = optimal_tracking_angle_deg)) +
+                        geom_line(color = 'darkblue') +
+                        geom_line(aes(x = timestamp,
+                                      y = backtracking_angle_deg),
+                                  color = 'red') +
+                        labs(x = 'Datetime',
+                             y = 'Tracking Angle [Degrees]',
+                             color = 'Legend') +
+                        scale_color_manual(values = colors)
         }
